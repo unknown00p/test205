@@ -15,8 +15,8 @@ app.use(morgan("dev"));
 const client = createClient({
 	password: process.env.REDIS_PASSWORD,
 	socket: {
-		host: "redis-11219.c281.us-east-1-2.ec2.redns.redis-cloud.com",
-		port: 11219,
+		host: process.env.REDIS_HOST,
+		port: process.env.REDIS_PORT,
 	},
 });
 
@@ -59,3 +59,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
 	console.log(`Backend is running on ${PORT}. Try http://localhost:${PORT}`);
 });
+
+export { client };
