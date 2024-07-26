@@ -3,6 +3,7 @@ import express from "express";
 import morgan from "morgan";
 import ProductRoute from "./routes/ProductRoutes.js";
 import connectDB from "./config/db.js";
+import { createClient } from "redis";
 import { notfound, errorHandler } from "./middleware/ErrorHander.js";
 
 dotenv.config();
@@ -10,6 +11,39 @@ connectDB();
 
 const app = express();
 app.use(morgan("dev"));
+
+const client = createClient({
+	password: process.env.REDIS_PASSWORD,
+	socket: {
+		host: "redis-11219.c281.us-east-1-2.ec2.redns.redis-cloud.com",
+		port: 11219,
+	},
+});
+
+client.on("error", (err) => {
+	console.error("Redis client error:", err);
+});
+
+client.on("connect", () => {
+	console.log("Connected to Redis");
+});
+
+const initializeRedis = async () => {
+	try {
+		await client.connect();
+		console.log("Redis connection established");
+
+		await client.set("test-key", "apple");
+		console.log("Set test-key");
+
+		const value = await client.get("test-key");
+		console.log("Value of test-key:", value);
+	} catch (err) {
+		console.error("Error with Redis operations:", err);
+	}
+};
+
+initializeRedis();
 
 app.get("/", (req, res) => {
 	res.send("Hello world from backend");

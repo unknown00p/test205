@@ -5,8 +5,24 @@ import asyncHandler from "../middleware/asynHandler.js";
 // @route   GET /api/products
 // @access  Public
 const FetchProducts = asyncHandler(async (req, res) => {
-	const productsFromDB = await Product.find({});
-	res.json(productsFromDB);
+	try {
+		// Check the cache first
+		const cachedProducts = await redisClient.get("products");
+		if (cachedProducts) {
+			// If cached data is found, parse it and send as response
+			res.json(JSON.parse(cachedProducts));
+		} else {
+			const productsFromDB = await Product.find({});
+			// Cache the result in Redis for 1 hour (3600 seconds)
+			await redisClient.setEx("products", 3600, JSON.stringify(productsFromDB));
+			console.log("line 19");
+			// Send the result as response
+			res.json(productsFromDB);
+		}
+	} catch (err) {
+		// Handle any errors
+		res.status(500).json({ message: "Server error" });
+	}
 });
 
 // @desc    Fetch single product by ID
